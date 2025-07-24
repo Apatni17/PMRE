@@ -1,23 +1,10 @@
-import openai
 import os
 import json
-from dotenv import load_dotenv
-
-# Load environment variables from a .env file
-load_dotenv()
-
-# Configure OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+import requests
 
 def load_knowledge_base(kb_path='PRME_App/data/knowledge_base.json'):
     """
     Loads a knowledge base from a JSON file.
-
-    Args:
-        kb_path (str): The path to the JSON knowledge base file.
-
-    Returns:
-        dict or None: The loaded knowledge base dictionary, or None if loading fails.
     """
     if not os.path.exists(kb_path):
         print(f"Warning: Knowledge base file not found at {kb_path}. Chatbot will rely solely on general knowledge.")
@@ -31,57 +18,57 @@ def load_knowledge_base(kb_path='PRME_App/data/knowledge_base.json'):
         print(f"Error loading knowledge base from {kb_path}: {e}")
         return None
 
-# Load the knowledge base when the module is imported
 knowledge_base = load_knowledge_base()
 
-def get_maintenance_advice(machine_params, risk_category):
+OLLAMA_URL = 'http://localhost:11434/api/chat'
+OLLAMA_MODEL = 'llama2'  # You can change to 'mistral' or another model if you prefer
+
+def get_maintenance_advice(machine_params, risk_category, chat_history=None):
     """
-    Gets maintenance advice from the OpenAI API based on machine parameters and risk level.
-
-    Args:
-        machine_params (dict): A dictionary of machine parameters (e.g., {'temperature': 60, 'vibration': 2.5, ...}).
-        risk_category (str): The predicted risk category ('low', 'medium', 'high').
-
-    Returns:
-        str: The chatbot's generated maintenance advice.
+    Uses a local LLM (Ollama) to provide conversational maintenance advice.
+    chat_history: list of dicts with 'role' and 'content' (Streamlit session state)
     """
-    if not openai.api_key:
-        return "OpenAI API key not found. Please set the OPENAI_API_KEY environment variable."
+    if chat_history is None:
+        chat_history = []
 
-    prompt = f"""You are an AI assistant specializing in predictive maintenance for industrial machines.
-Your goal is to provide maintenance advice based on machine parameters and a predicted risk level.
-Explain potential failure causes for the given risk level and suggest preventive actions.
-Keep the advice concise and actionable.
-
-Machine Parameters:
-{json.dumps(machine_params, indent=2)}
-
-Predicted Risk Level: {risk_category}
-
-"""
-
+    # Compose system prompt with knowledge base
+    system_prompt = (
+        "You are a helpful AI assistant specializing in predictive maintenance for industrial machines. "
+        "You have access to a knowledge base for risk causes and preventive actions. "
+        "When given machine parameters and a risk category, explain possible causes and suggest preventive actions. "
+        "Be conversational and answer follow-up questions.\n\n"
+    )
     if knowledge_base:
-        prompt += f"""\nReference the following knowledge base for specific advice if relevant:
-{json.dumps(knowledge_base, indent=2)}
-"""
+        system_prompt += f"Knowledge base: {json.dumps(knowledge_base, indent=2)}\n\n"
+    system_prompt += (
+        f"Current machine parameters: {json.dumps(machine_params, indent=2)}\n"
+        f"Predicted risk category: {risk_category}\n"
+    )
 
-    prompt += """\nBased on the above information, provide maintenance advice.
-"""
+    # Build messages for Ollama
+    messages = [{"role": "system", "content": system_prompt}]
+    for msg in chat_history:
+        # msg['role'] should be 'user' or 'assistant'
+        messages.append({"role": msg["role"], "content": msg["content"]})
+
+    # The last user message is always the user's latest input
+    # (Handled by Streamlit before calling this function)
 
     try:
-        response = openai.chat.completions.create(
-            model="gpt-3.5-turbo", # You can choose a different model if needed
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant specializing in machine maintenance."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=300 # Limit response length
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": OLLAMA_MODEL,
+                "messages": messages
+            },
+            timeout=60
         )
-        # Accessing the content correctly from the new API response object
-        advice = response.choices[0].message.content.strip()
-        return advice
+        response.raise_for_status()
+        data = response.json()
+        # Ollama returns the latest message in 'message' key
+        return data['message']['content'].strip()
     except Exception as e:
-        return f"Error getting advice from OpenAI API: {e}"
+        return f"[Local LLM Error] Could not get a response from Ollama. Is it running? Error: {e}"
 
 # Example usage (for testing during development)
 if __name__ == "__main__":

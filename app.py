@@ -178,9 +178,10 @@ if st.session_state['df'] is not None:
         df_display = st.session_state['df'].copy() # Keep a copy with Machine ID for display
 
         preprocessed_features = st.session_state['preprocessed_df'].copy()
-        if 'Machine ID' in preprocessed_features.columns:
-            preprocessed_features = preprocessed_features.drop('Machine ID', axis=1)
-
+        for col in ['Machine ID', 'risk_score']:
+            if col in preprocessed_features.columns:
+                preprocessed_features = preprocessed_features.drop(col, axis=1)
+        
         st.write("Preprocessed Data Preview (Features for Model):")
         st.dataframe(preprocessed_features.head())
 

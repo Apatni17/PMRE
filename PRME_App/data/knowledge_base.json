@@ -1,0 +1,21 @@
+{
+  "high_risk_causes": [
+    "Excessive vibration indicates bearing wear.",
+    "High temperature suggests friction."
+  ],
+  "preventive_actions_high_risk": [
+    "Inspect bearings.",
+    "Check lubrication."
+  ],
+  "medium_risk_causes": [
+    "Slightly elevated temperature.",
+    "Intermittent vibration."
+  ],
+  "preventive_actions_medium_risk": [
+    "Monitor closely.",
+    "Check fasteners."
+  ],
+  "low_risk_advice": [
+    "Continue routine monitoring."
+  ]
+}
