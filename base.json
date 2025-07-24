@@ -1,1 +1,59 @@
+import os
+import json
 
+# Define the directory and file path for the knowledge base
+data_dir = 'PRME_App/data'
+knowledge_base_path = os.path.join(data_dir, 'knowledge_base.json')
+
+# Check if the file exists
+if not os.path.exists(knowledge_base_path):
+    # Create the data directory if it doesn't exist
+    os.makedirs(data_dir, exist_ok=True)
+
+    # Create a Python dictionary containing maintenance advice
+    knowledge_base_data = {
+        "high_risk_causes": [
+            "Excessive vibration often indicates bearing wear or misalignment.",
+            "High temperature can be caused by friction, poor lubrication, or cooling system issues.",
+            "Low pressure in hydraulic systems might point to leaks or pump problems.",
+            "High load percentage can lead to increased stress and wear on components.",
+            "Frequent failure history suggests underlying chronic issues."
+        ],
+        "preventive_actions_high_risk": [
+            "Schedule immediate inspection and diagnostic testing of the machine.",
+            "Check and replace bearings if excessive vibration is detected.",
+            "Inspect cooling systems and lubrication for high temperature issues.",
+            "Verify hydraulic system for leaks and pump performance if pressure is low.",
+            "Analyze recent failure history to identify patterns and root causes.",
+            "Consider reducing load or optimizing operating parameters."
+        ],
+        "medium_risk_causes": [
+            "Slightly elevated temperature might indicate increased load or minor friction.",
+            "Intermittent or moderate vibration could be due to minor imbalances, loose parts, or early stage wear.",
+            "Pressure fluctuations within acceptable but not ideal ranges.",
+            "Increased runtime without recent service may lead to accumulated wear.",
+            "Some failure history suggests potential vulnerabilities."
+        ],
+        "preventive_actions_medium_risk": [
+            "Increase monitoring frequency for key parameters.",
+            "Perform thorough scheduled maintenance proactively.",
+            "Check for and tighten any loose fasteners or components.",
+            "Review lubrication schedule and quality.",
+            "Investigate minor anomalies during routine inspections."
+        ],
+        "low_risk_advice": [
+            "Machine is operating within normal parameters.",
+            "Continue routine monitoring and scheduled preventive maintenance as planned.",
+            "Document any minor observations during inspections."
+        ]
+    }
+
+    # Save the dictionary to a JSON file
+    try:
+        with open(knowledge_base_path, 'w') as f:
+            json.dump(knowledge_base_data, f, indent=4) # Use indent=4 for nice formatting
+        print(f"Knowledge base file created successfully at: {knowledge_base_path}")
+    except Exception as e:
+        print(f"Error saving knowledge base file to {knowledge_base_path}: {e}")
+else:
+    print(f"Knowledge base file already exists at: {knowledge_base_path}")
