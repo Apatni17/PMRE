@@ -1,1 +1,41 @@
+import pandas as pd
+import numpy as np
+import os
 
+# Define the directory for data
+data_dir = 'PRME_App/data'
+os.makedirs(data_dir, exist_ok=True)
+
+# Define the path for the sample data file
+sample_data_path = os.path.join(data_dir, 'sample_data.csv')
+
+# Create a DataFrame with diverse data
+num_rows = 200 # A reasonable number of rows
+
+data = {
+    'Machine ID': [f'Machine_{i:03d}' for i in range(num_rows)],
+    'Age': np.random.randint(1, 15, num_rows),
+    'Hours Used/Day': np.random.uniform(4, 24, num_rows).round(1),
+    'Temperature': np.random.uniform(20, 100, num_rows).round(2),
+    'Vibration Level': np.random.uniform(0.1, 5.0, num_rows).round(2),
+    'Load %': np.random.uniform(10, 100, num_rows).round(1),
+    'Time Since Last Service': np.random.randint(1, 365, num_rows),
+    'Failure History': np.random.randint(0, 5, num_rows),
+    # Generate a dummy risk score based on some parameters for diversity
+    'risk_score': np.random.uniform(10, 100, num_rows).round(2)
+}
+
+sample_df = pd.DataFrame(data)
+
+# Ensure some diversity in risk scores for testing categories
+sample_df.loc[sample_df['Temperature'] > 90, 'risk_score'] = np.random.uniform(80, 100, sample_df[sample_df['Temperature'] > 90].shape[0]).round(2)
+sample_df.loc[sample_df['Vibration Level'] > 4.0, 'risk_score'] = np.random.uniform(75, 95, sample_df[sample_df['Vibration Level'] > 4.0].shape[0]).round(2)
+sample_df.loc[sample_df['Temperature'] < 30, 'risk_score'] = np.random.uniform(10, 40, sample_df[sample_df['Temperature'] < 30].shape[0]).round(2)
+sample_df.loc[sample_df['Vibration Level'] < 1.0, 'risk_score'] = np.random.uniform(15, 45, sample_df[sample_df['Vibration Level'] < 1.0].shape[0]).round(2)
+
+
+# Save the DataFrame to CSV
+sample_df.to_csv(sample_data_path, index=False)
+
+print(f"Sample data CSV created successfully at: {sample_data_path}")
+display(sample_df.head())
